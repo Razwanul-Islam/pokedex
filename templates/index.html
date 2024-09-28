@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pokedex</title>
+    <style>
+        /* styles.css */
+
+body {
+    background-color: #f0f0f0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+}
+
+.pokedex {
+    display: flex;
+    width: 900px;
+    margin: 50px auto;
+    background-color: #e3350d;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0px 0px 20px rgba(0,0,0,0.5);
+}
+
+.left-panel {
+    width: 50%;
+    background-color: #cc0000;
+    position: relative;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.top-section {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+}
+
+.lights {
+    display: flex;
+}
+
+.light {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    margin-right: 10px;
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);
+}
+
+.light.red {
+    background-color: #ff4d4d;
+}
+
+.light.yellow {
+    background-color: #ffff66;
+}
+
+.light.green {
+    background-color: #66ff66;
+}
+
+.screen {
+    width: 100%;
+    height: 400px;
+    background-color: #1a1a1a;
+    border: 5px solid #333;
+    border-radius: 10px;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area {
+    width: 100%;
+    height: 100%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.upload-area p {
+    margin: 10px 0;
+    font-size: 18px;
+}
+
+.upload-area input[type="file"] {
+    display: none;
+}
+
+#pokemon-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: none;
+}
+
+.loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(26,26,26,0.8);
+}
+
+.spinner {
+    border: 8px solid #ccc;
+    border-top: 8px solid #fff;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.right-panel {
+    width: 50%;
+    background-color: #f15b5b;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: width 0.5s ease-in-out;
+}
+
+.details {
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    height: 100%;
+    overflow-y: auto;
+}
+
+.details h2 {
+    margin-top: 0;
+}
+
+.details h2, .details p {
+    margin: 10px 0;
+    color: #333;
+}
+
+.upload-area.dragover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 2px dashed #fff;
+}
+
+.buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.buttons .button {
+    width: 50px;
+    height: 50px;
+    background-color: #ffcc00;
+    border-radius: 50%;
+    box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="pokedex">
+        <div class="left-panel">
+            <div class="top-section">
+                <div class="lights">
+                    <div class="light red"></div>
+                    <div class="light yellow"></div>
+                    <div class="light green"></div>
+                </div>
+            </div>
+            <div class="screen">
+                <div class="upload-area" id="upload-area">
+                    <p>Drag & Drop Image Here</p>
+                    <input type="file" id="file-input" accept="image/*">
+                </div>
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                </div>
+                <img id="pokemon-image" src="" alt="">
+            </div>
+            <div class="buttons">
+                <!-- Decorative buttons can be added here -->
+            </div>
+        </div>
+        <div class="right-panel">
+            <div class="details">
+                <h2 id="pokemon-name"> </h2>
+                <p id="pokemon-description"><b></b></p>
+                <p id="pokemon-type"><b></b></p>
+                <p id="pokemon-abilities"><b></b></p>
+                <p id="pokemon-weaknesses"><b></b></p>
+                <p id="pokemon-strengths"><b></b></p>
+                <p id="pokemon-evolution"><b></b></p>
+                <p id="pokemon-region"><b></b></p></p>                
+                <p id="pokemon-habitat"><b></b></p>
+                <p id="pokemon-rareness"></p>
+                <p id="pokemon-rareness"><b></b></p></p>
+                <p id="pokemon-common-moves"><b></b></p></p>
+                <p id="pokemon-special-moves"><b></b></p>
+        </div>
+    </div>
+
+    <script>
+    // script.js
+
+const uploadArea = document.getElementById('upload-area');
+const fileInput = document.getElementById('file-input');
+const loading = document.getElementById('loading');
+const pokemonImage = document.getElementById('pokemon-image');
+
+const pokemonName = document.getElementById('pokemon-name');
+const pokemonDescription = document.getElementById('pokemon-description');
+const pokemonType = document.getElementById('pokemon-type');
+const pokemonAbilities = document.getElementById('pokemon-abilities');
+const pokemonWeaknesses = document.getElementById('pokemon-weaknesses');
+const pokemonStrengths = document.getElementById('pokemon-strengths');
+const pokemonEvolution = document.getElementById('pokemon-evolution');
+const pokemonRegion = document.getElementById('pokemon-region');
+const pokemonHabitat = document.getElementById('pokemon-habitat');
+const pokemonRareness = document.getElementById('pokemon-rareness');
+const pokemonCommonMoves = document.getElementById('pokemon-common-moves');
+const pokemonSpecialMoves = document.getElementById('pokemon-special-moves');
+const rightPanel = document.querySelector('.right-panel');
+
+// Click event to trigger file input
+uploadArea.addEventListener('click', () => {
+    fileInput.click();
+});
+
+// Drag over event to style the upload area
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+// Drag leave event to reset the upload area style
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+// Drop event to handle the dropped files
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        handleFile(files[0]);
+    }
+});
+
+// Change event when a file is selected
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length > 0) {
+        handleFile(fileInput.files[0]);
+    }
+});
+
+// Function to handle the uploaded file
+function handleFile(file) {
+    // Display loading animation
+    loading.style.display = 'flex';
+    uploadArea.style.display = 'none';
+    pokemonImage.style.display = 'none';
+
+    // Display the uploaded image
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        pokemonImage.src = e.target.result;
+        pokemonImage.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+
+    // Prepare form data for API call
+    const formData = new FormData();
+    formData.append('image', file);
+
+    // Send API request
+    fetch('http://127.0.0.1:8000/generate-info/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        // Hide loading animation
+        loading.style.display = 'none';
+
+        // Update the details section with API response
+        try {
+            pokemonName.innerHTML = '<b>Name:</b> ' + data.name;
+        } catch (error) {
+            console.error('Error setting pokemon name:', error);
+        }
+
+        try {
+            pokemonDescription.innerHTML = '<b>Description:</b> ' + data.description;
+        } catch (error) {
+            console.error('Error setting pokemon description:', error);
+        }
+
+        try {
+            console.log(data.type);
+            if (typeof data.type === 'string') {
+                pokemonType.innerHTML = '<b>Type:</b> ' + data.type;
+            } else {
+                pokemonType.innerHTML = '<b>Type:</b> ' + data.type.join(', ');
+            }
+        } catch (error) {
+            console.error('Error setting pokemon type:', error);
+        }
+
+        try {
+            pokemonAbilities.innerHTML = '<b>Abilities:</b> ' + data.abilities.join(', ');
+        } catch (error) {
+            console.error('Error setting pokemon abilities:', error);
+        }
+
+        try {
+            pokemonWeaknesses.innerHTML = '<b>Weaknesses:</b> ' + data.weaknesses.join(', ');
+        } catch (error) {
+            console.error('Error setting pokemon weaknesses:', error);
+        }
+
+        try {
+            pokemonStrengths.innerHTML = '<b>Strengths:</b> ' + data.strengths.join(', ');
+        } catch (error) {
+            console.error('Error setting pokemon strengths:', error);
+        }
+
+        try {
+            pokemonEvolution.innerHTML = '<b>Evolution:</b> ' + (data.evolution.length > 0 ? data.evolution.join(', ') : 'None');
+        } catch (error) {
+            console.error('Error setting pokemon evolution:', error);
+        }
+
+        try {
+            pokemonRegion.innerHTML = '<b>Region:</b> ' + data.region;
+        } catch (error) {
+            console.error('Error setting pokemon region:', error);
+        }
+
+        try {
+            pokemonHabitat.innerHTML = '<b>Habitat:</b> ' + data.habitat;
+        } catch (error) {
+            console.error('Error setting pokemon habitat:', error);
+        }
+
+        try {
+            pokemonRareness.innerHTML = '<b>Rareness:</b> ' + data.rareness;
+        } catch (error) {
+            console.error('Error setting pokemon rareness:', error);
+        }
+
+        try {
+            pokemonCommonMoves.innerHTML = '<b>Common Moves:</b> ' + data["common moves"].join(', ');
+        } catch (error) {
+            console.error('Error setting pokemon common moves:', error);
+        }
+
+        try {
+            pokemonSpecialMoves.innerHTML = '<b>Special Moves:</b> ' + data["special moves"].join(', ');
+        } catch (error) {
+            console.error('Error setting pokemon special moves:', error);
+        }
+
+        // Expand the right panel
+        rightPanel.style.width = '50%';
+    })
+    .catch(error_data => {
+        console.error('Error:', error_data);
+        loading.style.display = 'none';
+        alert('An error occurred while processing the image.');
+    });
+}
+    </script>
+</body>
+</html>
