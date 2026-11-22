@@ -12,6 +12,7 @@ A simple web app that transforms images of real-world objects or living things i
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
 - [Usage](#usage)
+- [Development Branch](#development-branch)
 - [Contributing](#contributing)
 - [Contact](#contact)
 
@@ -115,6 +116,11 @@ Follow these instructions to get a copy of the project up and running on your lo
 3. **Enjoy and Share**
 
    Read the fun description and share it with your friends!
+
+## Development Branch
+
+The `dev` branch exists both locally and on `origin`; both currently point to
+the same commit. Use `dev` as the shared development branch.
 
 ## Contributing
 
