@@ -1,158 +1,123 @@
-# Bringing the Pokédex to Living World
+# Pokédex Scanner
 
-A simple web app that transforms images of real-world objects or living things into their own "Pokémon" with generated descriptions, just like a Pokédex! 🚀
+Pokédex Scanner is a Django web application that turns an uploaded image into a generated, Pokédex-style field guide entry. It accepts images of Pokémon or real-world subjects and uses Google's Gemini model to produce structured details for the scanner interface.
 
+## Overview
 
-## Table of Contents
-
-- [About the Project](#about-the-project)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-- [Development Branch](#development-branch)
-- [Contributing](#contributing)
-- [Contact](#contact)
-
-## About the Project
-
-As an anime enthusiast and a big fan of Pokémon, I wanted to recreate the magic of the Pokédex in the real world. This web app takes an image input and uses an LLM to provide fun, Pokémon-like information about the object in the picture.
+The home page provides a responsive image scanner. Its upload control supports click, keyboard, and drag-and-drop selection; includes labels and instructions for the file input; exposes loading and result updates through live regions; provides visible keyboard focus styles; and respects reduced-motion preferences. The application sends the image to the server, displays a preview while it is analyzed, and renders the returned entry when processing is complete.
 
 ## Features
 
-- **Image Upload**: Upload any image of a real-world object or living thing.
-- **Pokémon Description**: Get a generated description as if the object were a Pokémon.
-- **Simple Interface**: Easy-to-use frontend with HTML, CSS, and JavaScript.
-- **Fast Processing**: Quick response times using the Gemini-1.5-flash LLM.
+- Image selection through click, keyboard, and drag-and-drop interactions
+- Image preview and live loading status
+- Server-side multipart image upload endpoint at `POST /generate-info/`
+- Gemini-powered generation of Pokédex-style details, including description, abilities, habitat, moves, and more
+- “Scan another image” action that opens the file picker; cancelling keeps the current result visible
+- Responsive styles, keyboard focus indicators, and reduced-motion support
+- Django tests that check the rendered scanner markup and expected inline JavaScript
 
-## Tech Stack
+## Technology Stack
 
-- **Frontend**: HTML, CSS, JavaScript
-- **Backend**: Django, Django Rest Framework
-- **AI Model**: Gemini-1.5-flash LLM (via Google's free API)
+| Area | Technology |
+| --- | --- |
+| Web framework | Django 5.1 |
+| API handling | Django REST Framework |
+| Templates | Django Templates |
+| AI integration | Google Generative AI with `gemini-1.5-flash` |
+| Image handling | Pillow |
+| Database | SQLite |
+| Frontend | HTML, CSS, and inline JavaScript |
 
-## Getting Started
+## Prerequisites
 
-Follow these instructions to get a copy of the project up and running on your local machine.
+- Python 3
+- `pip`
+- Git, to clone the repository
+- A Google API key with access to the Gemini API
 
-### Prerequisites
+## Setup
 
-- **Python 3.x** installed on your machine
-- **pip** package installer
-- **Git** for cloning the repository
-
-### Installation
-
-1. **Clone the repository**
+1. Clone the repository and enter its directory:
 
    ```bash
    git clone https://github.com/Razwanul-Islam/pokedex.git
    cd pokedex
    ```
 
-2. **Create a virtual environment**
+   If you already have a checkout, run the remaining commands from its root directory.
+
+2. Create and activate a virtual environment:
 
    ```bash
    python -m venv venv
+   source venv/bin/activate
    ```
 
-3. **Activate the virtual environment**
+   On Windows, activate it with:
 
-   - On Windows:
+   ```bat
+   venv\Scripts\activate
+   ```
 
-     ```bash
-     venv\Scripts\activate
-     ```
-
-   - On macOS and Linux:
-
-     ```bash
-     source venv/bin/activate
-     ```
-
-4. **Install the required packages**
+3. Install the dependencies:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-5. **Set up environment variables**
+4. Create a `.env` file in the project root and add your API key:
 
-   - Create a `.env` file in the project root.
-   - Add your Google API credentials:
+   ```env
+   GEMENI_API_KEY=your_google_api_key
+   ```
 
-     ```env
-     GEMENI_API_KEY=your_google_api_key
-     ```
+   The setting name is `GEMENI_API_KEY`, matching the application configuration.
 
-6. **Apply migrations**
+5. Apply database migrations:
 
    ```bash
    python manage.py migrate
    ```
 
-7. **Run the server**
+## Run Locally
 
-   ```bash
-   python manage.py runserver
-   ```
+Start Django's development server:
 
-8. **Access the app**
+```bash
+python manage.py runserver
+```
 
-   Open your web browser and navigate to `http://localhost:8000`.
+Open `http://localhost:8000/` in a browser, then upload an image to generate an entry.
 
-## Usage
+## Tests
 
-1. **Upload an Image**
+Run the Django test suite with:
 
-   Click on the "Upload Image" button and select an image from your device.
+```bash
+python manage.py test
+```
 
-2. **Generate Pokémon Info**
+These tests render the home page with Django's test client and assert required HTML and inline JavaScript strings, including the upload targets, request call, value formatting, scan-another behavior, failed-request cleanup, and stale-callback guard. They do not execute JavaScript in a browser, upload an image, call the Gemini API, or run the complete browser scan flow.
 
-   After successful image upload automatically generate the info
+## Project Structure
 
-3. **Enjoy and Share**
-
-   Read the fun description and share it with your friends!
-
-## Development Branch
-
-The `dev` branch exists both locally and on `origin`; both currently point to
-the same commit. Use `dev` as the shared development branch.
+```text
+.
+├── core/                 # Application views and tests
+├── pokedex/              # Django settings and URL configuration
+├── static/css/           # Scanner styles
+├── templates/            # Django templates
+├── manage.py             # Django management entry point
+├── requirements.txt      # Python dependencies
+└── db.sqlite3            # Local SQLite database created by migrations
+```
 
 ## Contributing
 
-Contributions are welcome! Feel free to fork the repository and make improvements or add new features.
+Contributions are welcome. Fork the repository, create a focused feature branch, make and test your changes, then open a pull request describing the change.
 
-1. **Fork the Project**
-2. **Create your Feature Branch**
+Before submitting, run:
 
-   ```bash
-   git checkout -b feature/AmazingFeature
-   ```
-
-3. **Commit your Changes**
-
-   ```bash
-   git commit -m 'Add some AmazingFeature'
-   ```
-
-4. **Push to the Branch**
-
-   ```bash
-   git push origin feature/AmazingFeature
-   ```
-
-5. **Open a Pull Request**
-
-
-## Contact
-
-- **LinkedIn**: [Md. Razwanul Islam](https://www.linkedin.com/in/md-razwanul-islam-2349311b0/)
-- **Email**: razwanrakib0@gmail.com
-
----
-
-Let's inspire each other to learn, create, and have fun. If you have more ideas like this, please share them with me. Let's build it together!
+```bash
+python manage.py test
+```
