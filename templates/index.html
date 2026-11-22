@@ -84,6 +84,7 @@
                             <div><dt>Common moves</dt><dd id="pokemon-common-moves"></dd></div>
                             <div><dt>Special moves</dt><dd id="pokemon-special-moves"></dd></div>
                         </dl>
+                        <button class="scan-another" id="scan-another" type="button">Scan another image</button>
                     </div>
                 </div>
             </section>
@@ -97,6 +98,7 @@ const loading = document.getElementById('loading');
 const pokemonImage = document.getElementById('pokemon-image');
 const emptyState = document.getElementById('empty-state');
 const resultContent = document.getElementById('result-content');
+const scanAnother = document.getElementById('scan-another');
 
 const pokemonName = document.getElementById('pokemon-name');
 const pokemonDescription = document.getElementById('pokemon-description');
@@ -110,6 +112,7 @@ const pokemonHabitat = document.getElementById('pokemon-habitat');
 const pokemonRareness = document.getElementById('pokemon-rareness');
 const pokemonCommonMoves = document.getElementById('pokemon-common-moves');
 const pokemonSpecialMoves = document.getElementById('pokemon-special-moves');
+let scanGeneration = 0;
 
 uploadArea.addEventListener('click', () => fileInput.click());
 uploadArea.addEventListener('keydown', (event) => {
@@ -136,6 +139,11 @@ fileInput.addEventListener('change', () => {
     if (fileInput.files.length > 0) handleFile(fileInput.files[0]);
 });
 
+scanAnother.addEventListener('click', () => {
+    fileInput.value = '';
+    fileInput.click();
+});
+
 function setEntry(id, value) {
     document.getElementById(id).textContent = value;
 }
@@ -144,7 +152,19 @@ function listValue(value) {
     return Array.isArray(value) ? value.join(', ') : value;
 }
 
+function evolutionValue(value) {
+    if (!Array.isArray(value)) return value;
+
+    return value.map((evolution) => {
+        if (!evolution || typeof evolution !== 'object') return evolution;
+
+        return evolution.name || evolution.species || evolution.pokemon || evolution.to
+            || Object.values(evolution).find((part) => typeof part === 'string') || '';
+    }).filter(Boolean).join(', ');
+}
+
 function handleFile(file) {
+    const generation = ++scanGeneration;
     loading.style.display = 'flex';
     uploadArea.style.display = 'none';
     pokemonImage.style.display = 'none';
@@ -153,6 +173,7 @@ function handleFile(file) {
 
     const reader = new FileReader();
     reader.onload = (event) => {
+        if (generation !== scanGeneration) return;
         pokemonImage.src = event.target.result;
         pokemonImage.style.display = 'block';
     };
@@ -170,6 +191,7 @@ function handleFile(file) {
             return response.json();
         })
         .then(data => {
+            if (generation !== scanGeneration) return;
             loading.style.display = 'none';
             pokemonName.textContent = data.name || 'Unidentified specimen';
             pokemonDescription.textContent = data.description || 'No description was generated.';
@@ -177,7 +199,7 @@ function handleFile(file) {
             setEntry('pokemon-abilities', listValue(data.abilities) || 'Unknown');
             setEntry('pokemon-weaknesses', listValue(data.weaknesses) || 'Unknown');
             setEntry('pokemon-strengths', listValue(data.strengths) || 'Unknown');
-            setEntry('pokemon-evolution', Array.isArray(data.evolution) && data.evolution.length ? data.evolution.join(', ') : 'None');
+            setEntry('pokemon-evolution', evolutionValue(data.evolution) || 'None');
             setEntry('pokemon-region', data.region || 'Unknown');
             setEntry('pokemon-habitat', data.habitat || 'Unknown');
             setEntry('pokemon-rareness', data.rareness || 'Unknown');
@@ -187,10 +209,13 @@ function handleFile(file) {
             resultContent.hidden = false;
         })
         .catch(error => {
+            if (generation !== scanGeneration) return;
+            scanGeneration += 1;
             console.error('Error:', error);
             loading.style.display = 'none';
             uploadArea.style.display = 'flex';
             pokemonImage.style.display = 'none';
+            fileInput.value = '';
             alert('An error occurred while processing the image.');
         });
 }
