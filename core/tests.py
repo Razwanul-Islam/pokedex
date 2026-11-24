@@ -7,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from PIL import Image
 
-from .models import CollectionEntry
+from .models import Battle, CollectionEntry
 
 
 class HomeViewTests(TestCase):
@@ -105,9 +105,12 @@ class BattleTests(TestCase):
     def start(self):
         return self.client.post('/battle/start/', {'entry': self.entry.pk})
 
+    def state(self):
+        return Battle.objects.get(session_key=self.client.session.session_key).state
+
     def turn(self, action='attack'):
         return self.client.post('/battle/turn/', {
-            'action': action, 'turn_token': self.client.session['battle']['turn_token'],
+            'action': action, 'turn_token': self.state()['turn_token'],
         })
 
     def test_setup_and_session_isolation(self):
@@ -122,13 +125,42 @@ class BattleTests(TestCase):
 
     def test_turn_and_stale_token(self):
         self.start()
-        token = self.client.session['battle']['turn_token']
+        token = self.state()['turn_token']
         self.assertEqual(self.turn().status_code, 302)
-        state = self.client.session['battle']
+        state = self.state()
         self.assertEqual((state['player_hp'], state['opponent_hp']), (80, 75))
         self.assertContains(self.client.get('/battle/'), 'Pikachu attacks Bulbasaur for 20 damage.')
         self.assertEqual(self.client.post('/battle/turn/', {'action': 'attack', 'turn_token': token}).status_code, 400)
-        self.assertEqual(self.client.session['battle'], state)
+        self.assertEqual(self.state(), state)
+
+    def test_overlapping_turns_consume_token_once(self):
+        from django.test import Client
+        from uuid import uuid4
+
+        self.start()
+        token = self.state()['turn_token']
+        other = Client()
+        other.cookies.update(self.client.cookies)
+        competing_responses = []
+
+        def interleaved_uuid():
+            # The first request has read its state; complete a second request
+            # before allowing the first to perform its conditional update.
+            if not competing_responses:
+                competing_responses.append(None)
+                competing_responses[0] = other.post('/battle/turn/', {
+                    'action': 'quick', 'turn_token': token,
+                })
+            return uuid4()
+
+        with patch('core.views.uuid4', side_effect=interleaved_uuid):
+            response = self.client.post('/battle/turn/', {'action': 'attack', 'turn_token': token})
+
+        self.assertEqual(competing_responses[0].status_code, 302)
+        self.assertEqual(response.status_code, 400)
+        state = self.state()
+        self.assertEqual((state['player_hp'], state['opponent_hp']), (80, 85))
+        self.assertNotEqual(state['turn_token'], token)
 
     def test_invalid_requests(self):
         self.assertEqual(self.client.post('/battle/turn/', {'action': 'attack'}).status_code, 400)
@@ -137,28 +169,28 @@ class BattleTests(TestCase):
         self.assertEqual(self.client.get('/battle/start/').status_code, 405)
         self.assertEqual(self.client.get('/battle/turn/').status_code, 405)
         self.start()
-        state = self.client.session['battle']
+        state = self.state()
         self.assertEqual(self.turn('invalid').status_code, 400)
-        self.assertEqual(self.client.session['battle'], state)
+        self.assertEqual(self.state(), state)
 
     def test_victory_and_new_battle(self):
         self.start()
         for _ in range(4):
             self.turn()
-        state = self.client.session['battle']
+        state = self.state()
         self.assertEqual((state['status'], state['player_hp'], state['opponent_hp']), ('won', 10, 0))
         self.assertContains(self.client.get('/battle/'), 'Victory! You win.')
         self.assertEqual(self.turn().status_code, 400)
         self.start()
-        self.assertEqual(self.client.session['battle']['status'], 'active')
-        self.assertEqual(self.client.session['battle']['player_hp'], 100)
-        self.assertNotEqual(self.client.session['battle']['turn_token'], state['turn_token'])
+        self.assertEqual(self.state()['status'], 'active')
+        self.assertEqual(self.state()['player_hp'], 100)
+        self.assertNotEqual(self.state()['turn_token'], state['turn_token'])
 
     def test_defeat(self):
         self.start()
         for _ in range(5):
             self.turn('quick')
-        state = self.client.session['battle']
+        state = self.state()
         self.assertEqual((state['status'], state['player_hp']), ('lost', 0))
         self.assertContains(self.client.get('/battle/'), 'Defeat. You lose.')
         self.assertEqual(self.turn().status_code, 400)

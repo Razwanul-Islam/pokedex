@@ -7,3 +7,9 @@ class CollectionEntry(models.Model):
 
     class Meta:
         ordering = ['-created_at', '-pk']
+
+
+class Battle(models.Model):
+    session_key = models.CharField(max_length=40, unique=True)
+    turn_token = models.CharField(max_length=32)
+    state = models.JSONField()

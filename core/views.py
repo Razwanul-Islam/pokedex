@@ -6,7 +6,7 @@ import google.generativeai as genai
 from django.conf import settings
 from PIL import Image
 import json
-from .models import CollectionEntry
+from .models import Battle, CollectionEntry
 from django.http import HttpResponseBadRequest
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -26,9 +26,10 @@ class CollectionView(ListView):
 
 
 def battle(request):
+    current = Battle.objects.filter(session_key=request.session.session_key).first() if request.session.session_key else None
     return render(request, 'battle.html', {
         'entries': CollectionEntry.objects.all(),
-        'battle': request.session.get('battle'),
+        'battle': current.state if current else None,
     })
 
 
@@ -44,18 +45,24 @@ def battle_start(request):
     name = result.get('name')
     if not isinstance(name, str) or not name.strip():
         name = 'Unidentified specimen'
-    request.session['battle'] = {
+    if not request.session.session_key:
+        request.session.create()
+    token = uuid4().hex
+    state = {
         'player': name[:100], 'opponent': 'Pikachu',
         'player_hp': 100, 'opponent_hp': 100, 'status': 'active',
         'events': [f'{name[:100]} enters the battle against Pikachu!'],
-        'turn_token': uuid4().hex,
+        'turn_token': token,
     }
+    Battle.objects.update_or_create(session_key=request.session.session_key, defaults={'turn_token': token, 'state': state})
     return redirect('battle')
 
 
 @require_POST
 def battle_turn(request):
-    state = request.session.get('battle')
+    token = request.POST.get('turn_token')
+    current = Battle.objects.filter(session_key=request.session.session_key, turn_token=token).first() if request.session.session_key and token else None
+    state = current.state if current else None
     if (not state or state.get('status') != 'active'
             or request.POST.get('action') not in ('attack', 'quick')
             or request.POST.get('turn_token') != state.get('turn_token')):
@@ -77,7 +84,13 @@ def battle_turn(request):
             events.append(f'{state["player"]} fainted. You lose!')
     state['events'] = events
     state['turn_token'] = uuid4().hex
-    request.session['battle'] = state
+    # The token comparison and state write must be one database operation. A
+    # competing turn or a new battle invalidates this snapshot before it saves.
+    updated = Battle.objects.filter(pk=current.pk, turn_token=token).update(
+        turn_token=state['turn_token'], state=state,
+    )
+    if not updated:
+        return HttpResponseBadRequest('Invalid battle action or battle is over.')
     return redirect('battle')
 
 # generate info
