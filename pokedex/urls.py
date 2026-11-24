@@ -16,9 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from core.views import generate_info,HomeView
+from django.conf import settings
+from django.conf.urls.static import static
+from core.views import generate_info, HomeView, CollectionView, battle, battle_start, battle_turn
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view()),
-    path('generate-info/', generate_info.as_view())
+    path('generate-info/', generate_info.as_view()),
+    path('collection/', CollectionView.as_view(), name='collection'),
+    path('battle/', battle, name='battle'),
+    path('battle/start/', battle_start, name='battle_start'),
+    path('battle/turn/', battle_turn, name='battle_turn'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

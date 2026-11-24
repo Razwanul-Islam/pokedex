@@ -14,7 +14,7 @@
                 <span class="brand-mark" aria-hidden="true"><span></span></span>
                 <span>Pokédex <strong>Scanner</strong></span>
             </a>
-            <p class="header-status"><span aria-hidden="true"></span> Field research console</p>
+            <nav aria-label="Main navigation"><a class="collection-link" href="{% url 'collection' %}">Collection book</a> · <a class="collection-link" href="{% url 'battle' %}">Battle</a></nav>
         </header>
 
         <section class="pokedex" aria-labelledby="page-title">
@@ -31,7 +31,7 @@
                 <div class="scanner-heading">
                     <p class="eyebrow">Visual identification system</p>
                     <h1 id="page-title">Scan a discovery</h1>
-                    <p>Upload a photo to generate its field guide entry.</p>
+                    <p>Upload a photo to generate and save its field guide entry to the shared collection.</p>
                 </div>
 
                 <div class="screen">

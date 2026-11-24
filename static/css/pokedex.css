@@ -62,6 +62,20 @@ body::before {
 .description { margin: 11px 0 22px; color: #46536a; font-size: .94rem; line-height: 1.55; }.entry-data { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; }.entry-data > div { min-width: 0; padding: 11px 12px; border: 1px solid #e4e6e2; border-radius: 8px; background: #fff; }.entry-data dt { margin-bottom: 4px; color: #798398; font-size: .65rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }.entry-data dd { margin: 0; overflow-wrap: anywhere; color: #26344c; font-size: .84rem; font-weight: 700; line-height: 1.4; }
 .scan-another { width: 100%; margin-top: 18px; padding: 11px 14px; border: 1px solid #9b3030; border-radius: 8px; color: #fff; background: var(--red); cursor: pointer; font: inherit; font-size: .88rem; font-weight: 800; }.scan-another:hover { background: var(--red-dark); }.scan-another:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
+.collection-link { color: var(--red-dark); font-weight: 800; }
+.collection-link:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.collection-grid { display: grid; gap: 18px; }
+.collection-card { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: 22px; padding: 20px; border: 1px solid #e1e3df; border-radius: 14px; background: #fdfcf8; }
+.collection-card img { width: 100%; height: 240px; object-fit: contain; border-radius: 8px; background: var(--navy); }
+.collection-card h2 { margin: 0; }
+.collection-card p { color: var(--muted); }
+.battle-panel { margin: 18px 0; padding: 22px; border: 1px solid #e1e3df; border-radius: 14px; background: #fdfcf8; }
+.battle-combatants { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.battle-panel select, .battle-button { padding: 10px; font: inherit; }
+.battle-button { border: 1px solid #9b3030; border-radius: 8px; color: white; background: var(--red-dark); font-weight: 800; cursor: pointer; }
+.battle-panel :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+@media (max-width: 600px) { .collection-card { grid-template-columns: 1fr; } }
+
 @media (max-width: 780px) { .app-shell { width: min(100% - 20px, 560px); padding-top: 15px; }.site-header { margin-bottom: 15px; }.header-status { display: none; }.pokedex { grid-template-columns: 1fr; border-radius: 18px; }.scanner-panel, .details-panel { padding: 22px; }.scanner-heading { margin-top: 20px; }.screen { min-height: 310px; }.upload-area { min-height: 286px; } #pokemon-image { height: 286px; }.details { height: auto; padding-top: 22px; }.empty-state { margin: 12px auto; } }
 @media (max-width: 420px) { .entry-data { grid-template-columns: 1fr; }.scanner-panel, .details-panel { padding: 18px; }.screen { padding: 8px; border-width: 5px; }.screen-grid, .loading { inset: 8px; }.upload-area { min-height: 260px; padding: 18px; } #pokemon-image { height: 260px; }.main-light { width: 50px; height: 50px; }.console-controls { margin-top: 18px; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
