@@ -12,6 +12,7 @@ The home page provides a responsive image scanner. Its upload control supports c
 - Image preview and live loading status
 - Server-side multipart image upload endpoint at `POST /generate-info/`
 - Gemini-powered generation of Pokédex-style details, including description, abilities, habitat, moves, and more
+- Automatic saving of successful scans and their uploaded images to a shared collection book at `/collection/`
 - “Scan another image” action that opens the file picker; cancelling keeps the current result visible
 - Responsive styles, keyboard focus indicators, and reduced-motion support
 - Django tests that check the rendered scanner markup and expected inline JavaScript
@@ -89,6 +90,8 @@ python manage.py runserver
 
 Open `http://localhost:8000/` in a browser, then upload an image to generate an entry.
 
+Successful scans are saved automatically and visible to everyone using this application. Images are stored under `media/`, while their generated data is stored in the database. Keep both when backing up or moving the application. Django serves the media files in development; a deployment must configure its web server or storage backend to serve `MEDIA_URL` from `MEDIA_ROOT`.
+
 ## Tests
 
 Run the Django test suite with:
@@ -97,7 +100,7 @@ Run the Django test suite with:
 python manage.py test
 ```
 
-These tests render the home page with Django's test client and assert required HTML and inline JavaScript strings, including the upload targets, request call, value formatting, scan-another behavior, failed-request cleanup, and stale-callback guard. They do not execute JavaScript in a browser, upload an image, call the Gemini API, or run the complete browser scan flow.
+Tests cover scanner markup and JavaScript strings, and exercise saving and revisiting a scan with a mocked Gemini response and temporary image storage. They do not execute JavaScript in a browser or call the Gemini API.
 
 ## Project Structure
 

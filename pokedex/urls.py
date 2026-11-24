@@ -16,9 +16,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from core.views import generate_info,HomeView
+from django.conf import settings
+from django.conf.urls.static import static
+from core.views import generate_info, HomeView, CollectionView
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', HomeView.as_view()),
-    path('generate-info/', generate_info.as_view())
+    path('generate-info/', generate_info.as_view()),
+    path('collection/', CollectionView.as_view(), name='collection'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

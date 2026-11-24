@@ -1,0 +1,41 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collection book | Pokédex Scanner</title>
+    <link rel="stylesheet" href="{% static 'css/pokedex.css' %}">
+</head>
+<body>
+    <main class="app-shell">
+        <header class="site-header">
+            <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><span></span></span><span>Pokédex <strong>Scanner</strong></span></a>
+            <a class="collection-link" href="/">Back to scanner</a>
+        </header>
+        <section aria-labelledby="collection-title">
+            <p class="eyebrow">Research records</p>
+            <h1 id="collection-title">Collection book</h1>
+            <p>Saved scans in the shared collection, newest first.</p>
+            <div class="collection-grid">
+                {% for entry in entries %}
+                <article class="collection-card">
+                    <img src="{{ entry.image.url }}" alt="Uploaded image for {{ entry.result.name|default:'unidentified specimen' }}">
+                    <div>
+                        <h2>{{ entry.result.name|default:'Unidentified specimen' }}</h2>
+                        <p>Saved {{ entry.created_at|date:'M j, Y, H:i' }}</p>
+                        <dl class="entry-data">
+                            {% for key, value in entry.result.items %}
+                            <div><dt>{{ key }}</dt><dd>{{ value }}</dd></div>
+                            {% endfor %}
+                        </dl>
+                    </div>
+                </article>
+                {% empty %}
+                <p>No saved scans yet. <a href="/">Scan an image</a> to start your collection.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+</body>
+</html>
