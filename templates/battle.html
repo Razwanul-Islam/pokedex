@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle | Pokédex Scanner</title>
+    <link rel="stylesheet" href="{% static 'css/pokedex.css' %}">
+</head>
+<body>
+<main class="app-shell">
+    <header class="site-header">
+        <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><span></span></span><span>Pokédex <strong>Scanner</strong></span></a>
+        <nav aria-label="Main navigation"><a class="collection-link" href="/">Scanner</a> · <a class="collection-link" href="{% url 'collection' %}">Collection book</a></nav>
+    </header>
+    <h1>Mock battle</h1>
+    <p>Choose a saved scan to battle the computer's Pikachu. Attack deals 25 damage and quick attack deals 15; Pikachu deals 20, or 35 when its health is 50 or less. You attack first.</p>
+    {% if battle %}
+    <section class="battle-panel" aria-labelledby="battle-title">
+        <h2 id="battle-title">Battle status</h2>
+        <div class="battle-combatants">
+            <div><h3>Your Pokémon: {{ battle.player }}</h3><p>Health: {{ battle.player_hp }} / 100</p><progress max="100" value="{{ battle.player_hp }}" aria-label="{{ battle.player }} health">{{ battle.player_hp }} / 100</progress></div>
+            <div><h3>Computer: {{ battle.opponent }}</h3><p>Health: {{ battle.opponent_hp }} / 100</p><progress max="100" value="{{ battle.opponent_hp }}" aria-label="{{ battle.opponent }} health">{{ battle.opponent_hp }} / 100</progress></div>
+        </div>
+        <div role="status"><h3>Battle events</h3><ul>{% for event in battle.events %}<li>{{ event }}</li>{% endfor %}</ul></div>
+        {% if battle.status == 'active' %}
+        <form action="{% url 'battle_turn' %}" method="post">{% csrf_token %}
+            <input type="hidden" name="turn_token" value="{{ battle.turn_token }}">
+            <button class="battle-button" type="submit" name="action" value="attack">Attack</button>
+            <button class="battle-button" type="submit" name="action" value="quick">Quick attack</button>
+        </form>
+        {% elif battle.status == 'won' %}<p><strong>Victory! You win.</strong></p>
+        {% else %}<p><strong>Defeat. You lose.</strong></p>{% endif %}
+    </section>
+    {% endif %}
+    <section class="battle-panel" aria-labelledby="choose-title">
+        <h2 id="choose-title">{% if battle %}Start a new battle{% else %}Choose your Pokémon{% endif %}</h2>
+        {% if entries %}
+        <form action="{% url 'battle_start' %}" method="post">{% csrf_token %}
+            <label for="entry">Saved Pokémon</label>
+            <select id="entry" name="entry" required>
+                {% for entry in entries %}<option value="{{ entry.pk }}">{{ entry.result.name|default:'Unidentified specimen' }} (scan {{ entry.pk }})</option>{% endfor %}
+            </select>
+            <button class="battle-button" type="submit">Start battle</button>
+        </form>
+        {% else %}<p>No saved scans yet. <a href="/">Scan an image</a> to enter a battle.</p>{% endif %}
+    </section>
+</main>
+</body>
+</html>

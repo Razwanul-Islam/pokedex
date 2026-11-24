@@ -7,6 +7,10 @@ from django.conf import settings
 from PIL import Image
 import json
 from .models import CollectionEntry
+from django.http import HttpResponseBadRequest
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
+from uuid import uuid4
 
 genai.configure(api_key=settings.GEMENI_API_KEY)
 
@@ -19,6 +23,62 @@ class CollectionView(ListView):
     model = CollectionEntry
     template_name = 'collection.html'
     context_object_name = 'entries'
+
+
+def battle(request):
+    return render(request, 'battle.html', {
+        'entries': CollectionEntry.objects.all(),
+        'battle': request.session.get('battle'),
+    })
+
+
+@require_POST
+def battle_start(request):
+    entry_id = request.POST.get('entry', '')
+    if not entry_id.isascii() or not entry_id.isdigit() or len(entry_id) > 18:
+        return HttpResponseBadRequest('Choose an available collection entry.')
+    entry = CollectionEntry.objects.filter(pk=int(entry_id)).first()
+    if entry is None:
+        return HttpResponseBadRequest('Choose an available collection entry.')
+    result = entry.result if isinstance(entry.result, dict) else {}
+    name = result.get('name')
+    if not isinstance(name, str) or not name.strip():
+        name = 'Unidentified specimen'
+    request.session['battle'] = {
+        'player': name[:100], 'opponent': 'Pikachu',
+        'player_hp': 100, 'opponent_hp': 100, 'status': 'active',
+        'events': [f'{name[:100]} enters the battle against Pikachu!'],
+        'turn_token': uuid4().hex,
+    }
+    return redirect('battle')
+
+
+@require_POST
+def battle_turn(request):
+    state = request.session.get('battle')
+    if (not state or state.get('status') != 'active'
+            or request.POST.get('action') not in ('attack', 'quick')
+            or request.POST.get('turn_token') != state.get('turn_token')):
+        return HttpResponseBadRequest('Invalid battle action or battle is over.')
+
+    player_damage = 25 if request.POST['action'] == 'attack' else 15
+    state['opponent_hp'] = max(0, state['opponent_hp'] - player_damage)
+    events = [f"{state['player']} attacks Pikachu for {player_damage} damage."]
+    if state['opponent_hp'] == 0:
+        state['status'] = 'won'
+        events.append('Pikachu fainted. You win!')
+    else:
+        # The opponent uses a stronger attack when its health is low.
+        damage = 35 if state['opponent_hp'] <= 50 else 20
+        state['player_hp'] = max(0, state['player_hp'] - damage)
+        events.append(f'Pikachu attacks {state["player"]} for {damage} damage.')
+        if state['player_hp'] == 0:
+            state['status'] = 'lost'
+            events.append(f'{state["player"]} fainted. You lose!')
+    state['events'] = events
+    state['turn_token'] = uuid4().hex
+    request.session['battle'] = state
+    return redirect('battle')
 
 # generate info
 class generate_info(GenericAPIView):

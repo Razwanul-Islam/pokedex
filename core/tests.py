@@ -96,3 +96,73 @@ class CollectionTests(TestCase):
 
     def test_empty_collection(self):
         self.assertContains(self.client.get('/collection/'), 'No saved scans yet.')
+
+
+class BattleTests(TestCase):
+    def setUp(self):
+        self.entry = CollectionEntry.objects.create(image='collection/test.png', result={'name': 'Bulbasaur'})
+
+    def start(self):
+        return self.client.post('/battle/start/', {'entry': self.entry.pk})
+
+    def turn(self, action='attack'):
+        return self.client.post('/battle/turn/', {
+            'action': action, 'turn_token': self.client.session['battle']['turn_token'],
+        })
+
+    def test_setup_and_session_isolation(self):
+        from django.test import Client
+        self.assertContains(self.client.get('/battle/'), 'Bulbasaur')
+        self.assertEqual(self.start().status_code, 302)
+        response = self.client.get('/battle/')
+        self.assertContains(response, 'Your Pokémon: Bulbasaur')
+        self.assertContains(response, 'Computer: Pikachu')
+        self.assertContains(response, 'Health: 100 / 100', count=2)
+        self.assertNotContains(Client().get('/battle/'), 'Battle status')
+
+    def test_turn_and_stale_token(self):
+        self.start()
+        token = self.client.session['battle']['turn_token']
+        self.assertEqual(self.turn().status_code, 302)
+        state = self.client.session['battle']
+        self.assertEqual((state['player_hp'], state['opponent_hp']), (80, 75))
+        self.assertContains(self.client.get('/battle/'), 'Pikachu attacks Bulbasaur for 20 damage.')
+        self.assertEqual(self.client.post('/battle/turn/', {'action': 'attack', 'turn_token': token}).status_code, 400)
+        self.assertEqual(self.client.session['battle'], state)
+
+    def test_invalid_requests(self):
+        self.assertEqual(self.client.post('/battle/turn/', {'action': 'attack'}).status_code, 400)
+        for entry in ('', '-1', 'abc', '9' * 100, '999999'):
+            self.assertEqual(self.client.post('/battle/start/', {'entry': entry}).status_code, 400)
+        self.assertEqual(self.client.get('/battle/start/').status_code, 405)
+        self.assertEqual(self.client.get('/battle/turn/').status_code, 405)
+        self.start()
+        state = self.client.session['battle']
+        self.assertEqual(self.turn('invalid').status_code, 400)
+        self.assertEqual(self.client.session['battle'], state)
+
+    def test_victory_and_new_battle(self):
+        self.start()
+        for _ in range(4):
+            self.turn()
+        state = self.client.session['battle']
+        self.assertEqual((state['status'], state['player_hp'], state['opponent_hp']), ('won', 10, 0))
+        self.assertContains(self.client.get('/battle/'), 'Victory! You win.')
+        self.assertEqual(self.turn().status_code, 400)
+        self.start()
+        self.assertEqual(self.client.session['battle']['status'], 'active')
+        self.assertEqual(self.client.session['battle']['player_hp'], 100)
+        self.assertNotEqual(self.client.session['battle']['turn_token'], state['turn_token'])
+
+    def test_defeat(self):
+        self.start()
+        for _ in range(5):
+            self.turn('quick')
+        state = self.client.session['battle']
+        self.assertEqual((state['status'], state['player_hp']), ('lost', 0))
+        self.assertContains(self.client.get('/battle/'), 'Defeat. You lose.')
+        self.assertEqual(self.turn().status_code, 400)
+
+    def test_empty_collection(self):
+        self.entry.delete()
+        self.assertContains(self.client.get('/battle/'), 'No saved scans yet.')

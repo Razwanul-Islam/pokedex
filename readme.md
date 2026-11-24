@@ -13,6 +13,7 @@ The home page provides a responsive image scanner. Its upload control supports c
 - Server-side multipart image upload endpoint at `POST /generate-info/`
 - Gemini-powered generation of Pokédex-style details, including description, abilities, habitat, moves, and more
 - Automatic saving of successful scans and their uploaded images to a shared collection book at `/collection/`
+- Session-specific mock battles at `/battle/`, using a saved scan against a rules-based Pikachu; no AI service is needed for battle turns
 - “Scan another image” action that opens the file picker; cancelling keeps the current result visible
 - Responsive styles, keyboard focus indicators, and reduced-motion support
 - Django tests that check the rendered scanner markup and expected inline JavaScript
@@ -100,7 +101,7 @@ Run the Django test suite with:
 python manage.py test
 ```
 
-Tests cover scanner markup and JavaScript strings, and exercise saving and revisiting a scan with a mocked Gemini response and temporary image storage. They do not execute JavaScript in a browser or call the Gemini API.
+Tests cover scanner markup and JavaScript strings, saving and revisiting a scan with a mocked Gemini response and temporary image storage, and mock battle behavior. They do not execute JavaScript in a browser or call the Gemini API.
 
 ## Project Structure
 
